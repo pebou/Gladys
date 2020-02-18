@@ -1,0 +1,37 @@
+test_front:
+  image: node:lts
+  stage: test
+  script:
+    - cd front
+      # Install global dependencies
+    - npm install codecov npm@latest -g
+      # Install NPM dependencies
+    - npm install
+      # Run prettier
+    - npm run prettier-check
+      # Run eslint
+    - npm run eslint
+
+test_server:
+  image: node:lts
+  stage: test
+  script:
+      # Install system dependencies 
+    - apt-get update && apt-get install -y libudev-dev sqlite3 openssl openzwave libopenzwave1.5-dev
+      # Install global dependencies
+    - npm install typescript node-gyp npm@latest -g
+      # Install NPM dependencies
+    - cd server && npm install
+      # Install Services' dependencies
+    - npm run postinstall
+      # Run prettier
+    - npm run prettier-check
+      # Run eslint
+    - npm run eslint
+      # Run tests
+    - ./node_modules/.bin/nyc npm test
+      # Retrieve Coverage
+    - ./node_modules/.bin/nyc report --reporter=text-summary
+  coverage: /^Statements\s*:\s*([^%]+)/
+  allow_failure: true
+  retry: 2

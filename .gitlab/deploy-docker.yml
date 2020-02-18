@@ -1,0 +1,65 @@
+.build_job_template: &build_job_definition
+  image: docker:git
+  stage: deploy
+  services:
+    - docker:dind
+  tags: 
+    - dind
+  script:
+      # Login in Gitlab Docker Registry
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+      # Install build dependencies
+    - apk update && apk add --no-cache bash curl git jq make perl
+#    - apk --no-cache add --virtual builds-deps build-base python
+      # To add qemu and define IMAGE_ID
+    - chmod +x .gitlab/load_env.sh
+    - set -eu
+    - . .gitlab/load_env.sh
+      # Build the image
+    - docker build -f docker/Dockerfile 
+      -t ${IMAGE_ID} --build-arg target=$TARGET 
+      --build-arg BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ") 
+      --build-arg VERSION=$VERSION 
+      .
+      # Push the image
+    - docker push ${IMAGE_ID}
+  needs:
+    - build_front
+    - test_server
+  retry: 2
+
+armhf:
+  <<: *build_job_definition
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    QEMU_ARCH: arm
+    TAG: arm
+    TARGET: arm32v6
+
+amd64:
+  <<: *build_job_definition
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    QEMU_ARCH: amd64
+    TAG: amd64
+    TARGET: amd64
+
+i386:
+  <<: *build_job_definition
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    QEMU_ARCH: i386
+    TAG: i386
+    TARGET: i386
+
+arm64v8:
+  <<: *build_job_definition
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    QEMU_ARCH: aarch64
+    TAG: arm64v8
+    TARGET: arm64v8

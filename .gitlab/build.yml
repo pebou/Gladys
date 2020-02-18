@@ -1,0 +1,15 @@
+build_front:
+  image: node:lts
+  stage: build
+  script:
+    - mkdir -p static
+    - rm -rf static/*
+    - cd front && npm install && npm run build
+    - cp -r build/. ../static
+  artifacts:
+    expire_in: 6 hours
+    paths:
+      - static/
+  needs:
+   - test_front
+    

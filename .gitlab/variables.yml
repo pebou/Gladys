@@ -1,0 +1,4 @@
+variables:
+  VERSION: 4.0.0-beta
+#  DIR: "`pwd`"
+  QEMU_VERSION: "v4.2.0-2"
